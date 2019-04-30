@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Unique key of the Deployment instance
+  name: webui
+spec:
+  selector:
+    matchLabels:
+      app: webui
+  # the number of pods that should exist at all times
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        # Apply this label to pods and default the Deployment label selector to this value
+        app: webui
+    spec:
+      containers:
+      - name: webui
+        # Run this image
+        image: "webui:1.0.0"
+        ports:
+          - name: http
+            containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: http
+        # set some environment variables that will be exposed to the container
+        env:
+        - name: RABBIT_HOST
+          value: rabbitmq
+        - name: RABBIT_USER
+          value: rabbit
+        # this one is pulled from a secret
+        - name: RABBIT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: webui
+              key: rabbitPassword
+        # define resources limits
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webui
+spec:
+  # NodePort services expose the port "nodePort" outside the cluster
+  type: NodePort
+  ports:
+    # map internal port 80 to external port 32500
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+      nodePort: 32500
+  selector:
+    # Loadbalance traffic across Pods matching this label selector
+    app: webui
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webui
+type: Opaque
+data:
+  # base64 encoded rabbitmq password
+  rabbitPassword: Q2lkZWxvaDc=

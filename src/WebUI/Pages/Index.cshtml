@@ -1,0 +1,19 @@
+﻿@page
+<div class="container">
+    <div class="row">
+        <input type="text" id="messageInput" value="hello world" hidden />
+        <input type="button" id="sendButton" value="Add to Process Queue" />
+    </div>
+    <div class="row">
+        <table class="table table-sm" id="statusTable" style="margin-top: 10px;">
+            <thead>
+                <tr>
+                    <th style="width:30%;">Job</th>
+                    <th style="width:30%;">Worker Pod</th>
+                    <th style="width:40%;">Status</th>
+                </tr>
+            </thead>        
+            <tbody></tbody>
+        </table>
+    </div>
+</div>

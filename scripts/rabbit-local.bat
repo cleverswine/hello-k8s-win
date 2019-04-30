@@ -1,0 +1,1 @@
+docker run --rm -d -p 5672:5672 --hostname rabbitmq --name rabbitmq -e RABBITMQ_DEFAULT_USER=rabbit -e RABBITMQ_DEFAULT_PASS=Cideloh7 rabbitmq:3

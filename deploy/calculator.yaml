@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Unique key of the Deployment instance
+  name: calculator
+spec:
+  selector:
+    matchLabels:
+      app: calculator
+  # the number of pods that should exist at all times
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        # Apply this label to pods and default the Deployment label selector to this value
+        app: calculator
+    spec:
+      containers:
+      - name: calculator
+        # Run this image
+        image: "calculator:1.0.0"
+        ports:
+        - name: http
+          containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: http
+        # set some environment variables that will be exposed to the container
+        env:
+        - name: WEBUI_BASE_URI
+          value: "http://webui"
+        - name: PORT
+          value: "80"
+          # this one is pulled from a secret
+        - name: RABBIT_URL
+          valueFrom:
+            secretKeyRef:
+              name: calculator
+              key: rabbitConnection
+        - name: POD
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        # define resources limits
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  # Unique key of the Service instance
+  name: calculator
+spec:
+  # ClusterIP services are only exposed inside the kubernetes cluster
+  type: ClusterIP
+  ports:
+    # Accept traffic sent to port 80
+    - name: http
+      port: 80
+      targetPort: 80
+  selector:
+    # Loadbalance traffic across Pods matching this label selector
+    app: calculator
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: calculator
+type: Opaque
+data:
+  # base64 encoded rabbitmq connection string
+  rabbitConnection: YW1xcDovL3JhYmJpdDpDaWRlbG9oN0ByYWJiaXRtcTo1NjcyLw== 
